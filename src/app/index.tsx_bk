@@ -1,0 +1,58 @@
+import { useRouter } from 'expo-router';
+import { FlatList, StyleSheet } from 'react-native';
+import Card from '../components/ui/card';
+import { CardItem } from '../types/CardItem';
+
+const MOCK_DATA: CardItem[] = [
+  {
+    id: '1',
+    title: 'Primera tarjeta',
+    image: 'https://picsum.photos/seed/1/400/200',
+    description: 'Y somos amigos',
+  },
+  {
+    id: '2',
+    title: 'Segunda tarjeta',
+    image: 'https://picsum.photos/seed/2/400/200',
+    description: 'Y somos amigos',
+  },
+  {
+    id: '3',
+    title: 'Tercera tarjeta',
+    image: 'https://picsum.photos/seed/3/400/200',
+    description: 'Y somos amigos',
+  },
+];
+
+const API_URL = 'https://fakestoreapi.com/products?limit=10';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  return (
+    <FlatList
+      data={MOCK_DATA}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContent}
+      renderItem={({ item }) => (
+        <Card
+          title={item.title}
+          image={item.image}
+          description={item.description}
+          onPress={() =>
+            router.push({
+              pathname: '/details',
+              params: { item: JSON.stringify(item) },
+            })
+          }
+        />
+      )}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  listContent: {
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+});

@@ -1,0 +1,201 @@
+import * as ImagePicker from 'expo-image-picker';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput
+} from 'react-native';
+import { createCard, updateCard } from '../../services/cards';
+import { CardItem } from '../../types/CardItem';
+
+export default function FormScreen() {
+    const { card } = useLocalSearchParams<{ card?: string }>();
+    const editing: CardItem | null = card ? JSON.parse(card) : null;
+    const router = useRouter();
+
+    const [title, setTitle] = useState(editing?.title ?? '');
+    const [description, setDescription] = useState(editing?.description ?? '');
+    const [imageUri, setImageUri] = useState<string | null>(editing?.image ?? null);
+    const [saving, setSaving] = useState(false);
+
+    const pickImage = async () => {
+        if (Platform.OS !== 'web') {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permiso denegado', 'Necesitamos acceso a tus fotos');
+                return;
+            }
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            //mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+            setImageUri(result.assets[0].uri);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!title.trim() || !description.trim() || !imageUri) {
+            Alert.alert('Error', 'Todos los campos son obligatorios');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+
+            const isNewImage = imageUri !== editing?.image;
+            if (isNewImage) {
+                if (Platform.OS === 'web') {
+                    const response = await fetch(imageUri);
+                    const blob = await response.blob();
+                    formData.append('image', blob, 'photo.jpg');
+
+                    // Nota: En web, el tipo MIME se infiere automáticamente del blob, por lo que no es necesario especificarlo.
+                } else {
+                    const filename = imageUri.split('/').pop() || 'photo.jpg';
+                    const match = /\.(\w+)$/.exec(filename);
+                    const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+                    formData.append('image', {
+                        uri: imageUri,
+                        name: filename,
+                        type,
+                    } as any);
+                }
+            }
+
+            if (editing) {
+                await updateCard(editing.id, formData);
+            } else {
+                await createCard(formData);
+            }
+
+            router.back();
+        } catch (err) {
+            Alert.alert(
+                'Error',
+                err instanceof Error ? err.message : 'No se pudo guardar'
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.label}>Título</Text>
+            <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Ej: Mi primera tarjeta"
+                style={styles.input}
+                editable={!saving}
+            />
+
+            <Text style={styles.label}>Descripción</Text>
+            <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Describe la tarjeta..."
+                style={[styles.input, styles.textArea]}
+                multiline
+                numberOfLines={4}
+                editable={!saving}
+            />
+            <Text style={styles.label}>Imagen</Text>
+            <Pressable
+                onPress={pickImage}
+                style={styles.imagePicker}
+                disabled={saving}
+            >
+                {imageUri ? (
+                    <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                ) : (
+                    <Text style={styles.imagePickerText}>📷 Seleccionar imagen</Text>
+                )}
+            </Pressable>
+
+            {imageUri && (
+                <Pressable onPress={pickImage} disabled={saving}>
+                    <Text style={styles.changeImageText}>Cambiar imagen</Text>
+                </Pressable>
+            )}
+
+            <Pressable
+                onPress={handleSave}
+                disabled={saving}
+                style={[styles.button, saving && styles.buttonDisabled]}
+            >
+                {saving ? (
+                    <ActivityIndicator color="#fff" />
+                ) : (
+                    <Text style={styles.buttonText}>
+                        {editing ? 'Actualizar' : 'Crear'}
+                    </Text>
+                )}
+            </Pressable>
+        </ScrollView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { padding: 24, backgroundColor: '#fff', flexGrow: 1 },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 6,
+        marginTop: 12,
+        color: '#333',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        backgroundColor: '#fafafa',
+    },
+    textArea: { height: 100, textAlignVertical: 'top' },
+    button: {
+        backgroundColor: '#333',
+        paddingVertical: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 24,
+    },
+    buttonDisabled: { opacity: 0.6 },
+    buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+    imagePicker: {
+        borderWidth: 2,
+        borderColor: '#ccc',
+        borderStyle: 'dashed',
+        borderRadius: 8,
+        height: 200,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+        backgroundColor: '#fafafa',
+    },
+    imagePickerText: { fontSize: 16, color: '#888' },
+    imagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
+    changeImageText: {
+        color: '#333',
+        fontWeight: '600',
+        textAlign: 'center',
+        marginTop: 8,
+    },
+});
