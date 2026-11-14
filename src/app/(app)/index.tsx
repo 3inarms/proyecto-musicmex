@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+// @ts-ignore TypeScript is not configured to parse JSX in imported TSX modules.
 import Card from '../../components/ui/card';
 import { CardItem } from '../../types/CardItem';
 import { deleteToken } from '../../utils/tokenStorage';
