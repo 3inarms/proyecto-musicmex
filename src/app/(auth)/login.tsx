@@ -55,13 +55,7 @@ export default function LoginScreen() {
                 secureTextEntry
                 style={styles.input}
             />
-            <Pressable onPress={handleLogin} disabled={loading}>
-                {loading ? (
-                    <ActivityIndicator />
-                ) : (
-                    <Text style={styles.buttonText}>Iniciar Sesión</Text>
-                )}
-            </Pressable>
+
             <Pressable
             onPress={handleLogin}
             disabled={loading}
