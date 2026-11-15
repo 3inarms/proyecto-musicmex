@@ -9,9 +9,9 @@ import {
   View,
 } from 'react-native';
 // @ts-ignore TypeScript is not configured to parse JSX in imported TSX modules.
+import { useAuth } from '@/context/AuthContext';
 import Card from '../../components/ui/card';
 import { CardItem } from '../../types/CardItem';
-import { deleteToken } from '../../utils/tokenStorage';
 // 
 import { getCards } from '../../services/cards';
 
@@ -49,9 +49,10 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { signOut } = useAuth();
+
   const handleLogout = async () => {
-    await deleteToken();
-    router.replace('/(auth)/login');
+    await signOut();
   };
 
   const fetchCards = useCallback(async () => {

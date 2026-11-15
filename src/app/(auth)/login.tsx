@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ReactNode, RefObject, useRef, useState } from 'react';
 import {
@@ -17,9 +16,9 @@ import {
   View,
 } from 'react-native';
 
+import { useAuth } from '@/context/AuthContext';
 import { Palette, radius, spacing, useAppTheme } from '@/theme';
 import { login } from '@/utils/auth';
-import { saveToken } from '@/utils/tokenStorage';
 
 type FieldProps = TextInputProps & {
   icon: keyof typeof Ionicons.glyphMap;
@@ -58,7 +57,7 @@ function Field({ icon, c, right, inputRef, ...props }: FieldProps) {
 
 export default function LoginScreen() {
   const c = useAppTheme();
-  const router = useRouter();
+  const { signIn } = useAuth();
   const passwordRef = useRef<TextInputInstance>(null);
 
   const [username, setUsername] = useState('');
@@ -78,8 +77,7 @@ export default function LoginScreen() {
       setLoading(true);
       setError('');
       const token = await login(username.trim(), password);
-      await saveToken(token);
-      router.replace('/');
+      await signIn(token);
     } catch (e) {
       setError(
         e instanceof Error && e.message === 'Credenciales invalidas'

@@ -1,24 +1,21 @@
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/theme';
 
-export default function RootLayout() {
+export default function AppLayout() {
   const c = useAppTheme();
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: c.bg },
-        }}
-      >
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(app)" />
-      </Stack>
-    </SafeAreaProvider>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: c.surface },
+        headerTintColor: c.text,
+        contentStyle: { backgroundColor: c.bg },
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: 'Tarjetas' }} />
+      <Stack.Screen name="details" options={{ title: 'Detalle' }} />
+      <Stack.Screen name="form" options={{ title: 'Producto' }} />
+    </Stack>
   );
 }
